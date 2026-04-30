@@ -1,9 +1,9 @@
 import os
 import re
 import secrets
-import smtplib
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
+
+import httpx
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -29,26 +29,46 @@ class AuthController:
 
     @staticmethod
     def _send_otp_email(email: str, code: str) -> None:
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        smtp_from = os.getenv("SMTP_FROM", smtp_user or "no-reply@example.com")
+        api_token = os.getenv("MAILERSEND_API_KEY")
+        from_email = os.getenv("MAILERSEND_FROM")
 
-        if not smtp_user or not smtp_password:
+        if not api_token or not from_email:
             print(f"[OTP DEV] Codigo para {email}: {code}")
             return
 
-        msg = EmailMessage()
-        msg["Subject"] = "Codigo OTP - University"
-        msg["From"] = smtp_from
-        msg["To"] = email
-        msg.set_content(
-            f"Tu codigo OTP es: {code}\n\n"
-            f"Este codigo expira en {OTP_TTL_MINUTES} minutos."
-        )
+        payload = {
+            "from": {"email": from_email},
+            "to": [{"email": email}],
+            "subject": "Codigo OTP - University",
+            "text": (
+                f"Tu codigo OTP es: {code}\n\n"
+                f"Este codigo expira en {OTP_TTL_MINUTES} minutos."
+            ),
+        }
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
+        try:
+            response = httpx.post(
+                "https://api.mailersend.com/v1/email",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {api_token}",
+                    "Content-Type": "application/json",
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            print(f"[OTP EMAIL ERROR] MailerSend respondio {exc.response.status_code}: {exc.response.text}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="No se pudo enviar el correo OTP. Intenta de nuevo.",
+            )
+        except httpx.RequestError as exc:
+            print(f"[OTP EMAIL ERROR] Error de conexion con MailerSend: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="No se pudo enviar el correo OTP. Intenta de nuevo.",
+            )
 
     @staticmethod
     def request_otp(email: str, db: Session = Depends(get_db)) -> None:
