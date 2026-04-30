@@ -49,7 +49,7 @@ class AuthController:
             f"Este codigo expira en {OTP_TTL_MINUTES} minutos."
         )
 
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.send_message(msg)
