@@ -1,10 +1,9 @@
 import os
 import re
 import secrets
-import smtplib
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
 
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -30,23 +29,27 @@ class AuthController:
     @staticmethod
     def _send_otp_email(email: str, code: str) -> None:
         api_key = os.getenv("RESEND_API_KEY")
-        
-        if not api_key:     
-            print(f"[OTP DEV] codigo para {email}: {code}")
+
+        if not api_key:
+            print(f"[OTP DEV] Codigo para {email}: {code}")
             return
-        
-        import resend
-        resend.api_key = api_key
-        
-        resend.Email.send({
-            "from": "onboarding@resend.dev",
-            "to": email,
-            "subject": "Codigo OTP - University",
-            "text": (
-                f"Tu codigo OTP es: {code}\n\n"
-                f"este codigo es valido por {OTP_TTL_MINUTES} minutos."
-            )
-        })
+
+        httpx.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": "onboarding@resend.dev",
+                "to": [email],
+                "subject": "Codigo OTP - University",
+                "text": (
+                    f"Tu codigo OTP es: {code}\n\n"
+                    f"Este codigo es valido por {OTP_TTL_MINUTES} minutos."
+                ),
+            },
+        )
 
     @staticmethod
     def request_otp(email: str, db: Session = Depends(get_db)) -> None:
@@ -54,7 +57,6 @@ class AuthController:
         code = f"{secrets.randbelow(1000000):06d}"
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
-        # Mark previous pending OTP codes as used to keep only one valid code.
         db.query(OTPCode).filter(
             OTPCode.email == normalized_email,
             OTPCode.used.is_(False)
