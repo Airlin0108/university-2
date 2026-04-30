@@ -40,10 +40,20 @@ class AuthController:
             "from": {"email": from_email},
             "to": [{"email": email}],
             "subject": "Codigo OTP - University",
-            "text": (
-                f"Tu codigo OTP es: {code}\n\n"
-                f"Este codigo expira en {OTP_TTL_MINUTES} minutos."
-            ),
+            "template_id": "pxkjn41w8w9lz781",
+            "personalization": [
+                {
+                    "email": email,
+                    "data": {
+                        "name": email.split("@")[0],
+                        "year": str(datetime.now(timezone.utc).year),
+                        "otp_code": code,
+                        "support_url": os.getenv("SUPPORT_URL", ""),
+                        "account_name": os.getenv("ACCOUNT_NAME", "University"),
+                        "expiry_minutes": str(OTP_TTL_MINUTES),
+                    },
+                }
+            ],
         }
 
         try:
