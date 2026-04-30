@@ -32,7 +32,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
 	CORSMiddleware,
-	allow_origins=["https://university-2-yy3l.onrender.com"],
+	allow_origins=["https://dancing-taffy-f58770.netlify.app"],
 	allow_credentials=True,
 	allow_methods=["*"],
 	allow_headers=["*"],
