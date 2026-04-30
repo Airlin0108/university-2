@@ -32,7 +32,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
 	CORSMiddleware,
-	allow_origins=["*"],
+	allow_origins=["https://university-2-yy3l.onrender.com"],
 	allow_credentials=True,
 	allow_methods=["*"],
 	allow_headers=["*"],
