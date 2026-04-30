@@ -32,7 +32,14 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
 	CORSMiddleware,
-	allow_origins=["https://dancing-taffy-f58770.netlify.app"],
+	allow_origins=[
+		"https://dancing-taffy-f58770.netlify.app",
+		"https://69f2d58d8aed8b0008faef7f--dancing-taffy-f58770.netlify.app/",
+		"http://localhost:5500",
+		"http://localhost:5173",
+		"http://127.0.0.1:5500",
+		"http://127.0.0.1:5173",
+	],
 	allow_credentials=True,
 	allow_methods=["*"],
 	allow_headers=["*"],
