@@ -29,30 +29,24 @@ class AuthController:
 
     @staticmethod
     def _send_otp_email(email: str, code: str) -> None:
-        smtp_host = os.getenv("SMTP_HOST")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        smtp_from = os.getenv("SMTP_FROM", smtp_user or "no-reply@example.com")
-
-        if not smtp_host or not smtp_user or not smtp_password:
-            # In local development we avoid crashing if SMTP is not configured.
-            print(f"[OTP DEV] Codigo para {email}: {code}")
+        api_key = os.getenv("RESEND_API_KEY")
+        
+        if not api_key:     
+            print(f"[OTP DEV] codigo para {email}: {code}")
             return
-
-        msg = EmailMessage()
-        msg["Subject"] = "Codigo OTP - University"
-        msg["From"] = smtp_from
-        msg["To"] = email
-        msg.set_content(
-            f"Tu codigo OTP es: {code}\n\n"
-            f"Este codigo expira en {OTP_TTL_MINUTES} minutos."
-        )
-
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
+        
+        import resend
+        resend.api_key = api_key
+        
+        resend.Email.send({
+            "from": "onboarding@resend.dev",
+            "to": email,
+            "subject": "Codigo OTP - University",
+            "text": (
+                f"Tu codigo OTP es: {code}\n\n"
+                f"este codigo es valido por {OTP_TTL_MINUTES} minutos."
+            )
+        })
 
     @staticmethod
     def request_otp(email: str, db: Session = Depends(get_db)) -> None:
