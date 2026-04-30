@@ -1,9 +1,10 @@
 import os
 import re
 import secrets
+import smtplib
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 
-import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -28,28 +29,26 @@ class AuthController:
 
     @staticmethod
     def _send_otp_email(email: str, code: str) -> None:
-        api_key = os.getenv("RESEND_API_KEY")
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        smtp_from = os.getenv("SMTP_FROM", smtp_user or "no-reply@example.com")
 
-        if not api_key:
+        if not smtp_user or not smtp_password:
             print(f"[OTP DEV] Codigo para {email}: {code}")
             return
 
-        httpx.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": "onboarding@resend.dev",
-                "to": [email],
-                "subject": "Codigo OTP - University",
-                "text": (
-                    f"Tu codigo OTP es: {code}\n\n"
-                    f"Este codigo es valido por {OTP_TTL_MINUTES} minutos."
-                ),
-            },
+        msg = EmailMessage()
+        msg["Subject"] = "Codigo OTP - University"
+        msg["From"] = smtp_from
+        msg["To"] = email
+        msg.set_content(
+            f"Tu codigo OTP es: {code}\n\n"
+            f"Este codigo expira en {OTP_TTL_MINUTES} minutos."
         )
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
 
     @staticmethod
     def request_otp(email: str, db: Session = Depends(get_db)) -> None:
