@@ -69,9 +69,20 @@ class AuthController:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
             print(f"[OTP EMAIL ERROR] MailerSend respondio {exc.response.status_code}: {exc.response.text}")
+            body = exc.response.json() if exc.response.content else {}
+            errors = body.get("errors", {})
+            is_unauthorized_recipient = any(
+                "authorized" in str(msg).lower() or "verified" in str(msg).lower()
+                for msgs in errors.values()
+                for msg in (msgs if isinstance(msgs, list) else [msgs])
+            )
+            if is_unauthorized_recipient:
+                detail = "Este correo no esta autorizado para recibir emails. Contacta al administrador."
+            else:
+                detail = "No se pudo enviar el correo OTP. Intenta de nuevo."
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="No se pudo enviar el correo OTP. Intenta de nuevo.",
+                detail=detail,
             )
         except httpx.RequestError as exc:
             print(f"[OTP EMAIL ERROR] Error de conexion con MailerSend: {exc}")
