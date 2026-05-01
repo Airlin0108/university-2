@@ -13,7 +13,10 @@ from database import get_db
 from models.db_model import OTPCode, AuthSession
 
 
+# Tiempo de vida del código OTP en minutos antes de expirar
 OTP_TTL_MINUTES = 10
+
+# Duración de la sesión autenticada en horas
 SESSION_TTL_HOURS = 12
 
 security = HTTPBearer(auto_error=False)
