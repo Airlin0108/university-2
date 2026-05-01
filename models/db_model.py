@@ -20,6 +20,7 @@ class OTPCode(Base):
     used = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
+
 # Modelo para gestionar las sesiones autenticadas
 class AuthSession(Base):
     __tablename__ = "auth_sessions"
