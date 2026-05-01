@@ -1,3 +1,9 @@
+"""
+Aplicación principal de University.
+Gestiona autenticación OTP por correo y CRUD de estudiantes.
+Construida con FastAPI y SQLite.
+"""
+
 import os
 from pathlib import Path
 
