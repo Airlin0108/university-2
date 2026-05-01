@@ -36,7 +36,7 @@ load_env_file()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="University API",
-    description="API para gestión de estudiantes con autenticación OTP.",
+    description="API para gestión de estudiantes con autenticación OTP",
     version="1.0.0",
 )
 app.add_middleware(
