@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
 from datetime import datetime, timezone
 from database import Base
 
+# Modelo de estudiante registrado en el sistema
 class Students(Base):
     __tablename__ = "students"
     id = Column(Integer,primary_key=True, index=True)
@@ -9,7 +10,7 @@ class Students(Base):
     age = Column(Integer, nullable=False)
     grade = Column(Float, nullable=False)
 
-
+# Modelo para almacenar los codigos OTP generados
 class OTPCode(Base):
     __tablename__ = "otp_codes"
     id = Column(Integer, primary_key=True, index=True)
@@ -19,7 +20,7 @@ class OTPCode(Base):
     used = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
-
+# Modelo para gestionar las sesiones autenticadas
 class AuthSession(Base):
     __tablename__ = "auth_sessions"
     id = Column(Integer, primary_key=True, index=True)
